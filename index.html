@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0e0b1a" />
+<title>Oman Eats — Find your best bite</title>
+<style>
+:root{
+  --bg:#0e0b1a; --bg2:#171232; --card:#1d1840; --ink:#f4f1ff; --muted:#a79fce;
+  --accent:#ff5a7e; --accent2:#ffb648; --green:#38d39f; --radius:26px;
+  --shadow:0 30px 60px -20px rgba(0,0,0,.7);
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;color:var(--ink);font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",sans-serif;overflow:hidden}
+body{
+  background:
+    radial-gradient(1200px 700px at 80% -10%, #2a1f5e 0%, transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, #3a1f4a 0%, transparent 55%),
+    var(--bg);
+  background-attachment:fixed;
+}
+/* animated aurora */
+body::before{
+  content:"";position:fixed;inset:-30%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(40% 40% at 30% 30%, rgba(255,90,126,.10), transparent 70%),
+    radial-gradient(40% 40% at 70% 60%, rgba(255,182,72,.08), transparent 70%),
+    radial-gradient(40% 40% at 50% 80%, rgba(56,211,159,.07), transparent 70%);
+  animation:aurora 18s ease-in-out infinite alternate;
+}
+@keyframes aurora{0%{transform:translate(0,0) scale(1)}50%{transform:translate(4%, -3%) scale(1.08)}100%{transform:translate(-3%,3%) scale(1.03)}}
+
+/* ===== Layout ===== */
+.shell{height:100dvh;display:flex;justify-content:center;gap:34px;padding:0 18px;align-items:center}
+.app{height:100dvh;display:grid;grid-template-rows:auto auto 1fr auto;width:100%;max-width:460px;position:relative}
+
+/* ===== Header ===== */
+header{padding:20px 8px 6px;display:flex;align-items:center;justify-content:space-between;gap:12px;animation:dropIn .6s var(--ease) both}
+.logo{font-weight:800;font-size:23px;letter-spacing:-.5px;display:flex;align-items:center;gap:9px}
+.logo .mark{font-size:26px;animation:wiggle 4s ease-in-out infinite}
+@keyframes wiggle{0%,92%,100%{transform:rotate(0)}94%{transform:rotate(-18deg)}96%{transform:rotate(14deg)}98%{transform:rotate(-6deg)}}
+.logo span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo small{display:block;font-size:10px;font-weight:700;letter-spacing:2.5px;color:var(--muted);margin-top:-1px}
+.iconbtn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--ink);width:44px;height:44px;border-radius:14px;font-size:18px;cursor:pointer;transition:transform .25s var(--spring),background .2s;position:relative;display:grid;place-items:center}
+.iconbtn:hover{background:rgba(255,255,255,.13);transform:translateY(-3px)}
+.iconbtn:active{transform:scale(.9)}
+.talabat-browse{text-decoration:none;color:#ff7a1a}
+.badge{position:absolute;top:-7px;right:-7px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;min-width:21px;height:21px;border-radius:11px;display:none;place-items:center;padding:0 5px;animation:pop .4s var(--spring)}
+@keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+
+/* ===== Filters ===== */
+.filters{display:flex;gap:8px;overflow-x:auto;padding:10px 8px 14px;scrollbar-width:none;animation:dropIn .6s .05s var(--ease) both}
+.filters::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:var(--muted);padding:9px 15px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:transform .25s var(--spring),background .2s,color .2s}
+.chip:hover{color:var(--ink);transform:translateY(-2px)}
+.chip:active{transform:scale(.94)}
+.chip.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border-color:transparent;box-shadow:0 8px 20px -6px var(--accent)}
+
+/* ===== Deck ===== */
+.deck-wrap{position:relative;min-height:0}
+.deck{position:absolute;inset:6px 6px 0;perspective:1400px}
+.card{position:absolute;inset:0;border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);overflow:hidden;cursor:grab;user-select:none;display:flex;flex-direction:column;will-change:transform;border:1px solid rgba(255,255,255,.07);transition:transform .55s var(--spring),opacity .4s}
+.card.dragging{transition:none}
+.card:active{cursor:grabbing}
+.card .hero{height:48%;position:relative;display:grid;place-items:center;overflow:hidden}
+.card .hero .emoji{filter:drop-shadow(0 10px 18px rgba(0,0,0,.4));animation:float 5s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.card .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 38%,rgba(0,0,0,.55) 100%)}
+/* generated brand logo emblem */
+.brand{position:relative;border-radius:28%;display:grid;place-items:center;font-weight:800;color:#fff;letter-spacing:.5px;box-shadow:0 12px 26px -8px rgba(0,0,0,.6);border:2px solid rgba(255,255,255,.22);text-shadow:0 2px 8px rgba(0,0,0,.35);flex:0 0 auto;z-index:2}
+.brand .em{position:absolute;bottom:-7px;right:-7px;font-size:.5em;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+.brand.hero-brand{width:120px;height:120px;font-size:42px;letter-spacing:1px;animation:float 5s ease-in-out infinite}
+.brand.av-brand{width:46px;height:46px;font-size:17px;border-radius:30%}
+.brand.best-brand{width:58px;height:58px;font-size:21px;border-radius:30%}
+.sell{font-size:12.5px;color:var(--green);font-weight:600}
+.sell b{color:var(--ink);font-weight:700}
+/* Talabat order button */
+.tlb{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;background:linear-gradient(90deg,#ff5a00,#ff8c1a);color:#fff;font-weight:800;font-size:13.5px;padding:11px 12px;border-radius:14px;margin-top:10px;box-shadow:0 12px 24px -12px #ff5a00;transition:transform .25s var(--spring),filter .2s;text-align:center}
+.tlb:hover{filter:brightness(1.08);transform:translateY(-2px)}
+.tlb:active{transform:scale(.97)}
+.tlb.off{background:rgba(255,255,255,.06);color:var(--muted);box-shadow:none;font-weight:600;cursor:default}
+/* action button row (Talabat + Google Maps) */
+.acts{display:flex;gap:8px;margin-top:10px}
+.acts>*{margin-top:0;flex:1 1 0;min-width:0}
+.gmap{display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;background:linear-gradient(90deg,#1a73e8,#34a853);color:#fff;font-weight:800;font-size:13.5px;padding:11px 8px;border-radius:14px;box-shadow:0 12px 24px -12px #1a73e8;transition:transform .25s var(--spring),filter .2s;text-align:center;white-space:nowrap}
+.gmap:hover{filter:brightness(1.08);transform:translateY(-2px)}
+.gmap:active{transform:scale(.97)}
+.pill{position:absolute;top:14px;background:rgba(0,0,0,.42);backdrop-filter:blur(8px);padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;z-index:2}
+.pill.price{left:14px}
+.pill.rating{right:14px;color:var(--accent2)}
+.card .body{padding:16px 20px 20px;flex:1;display:flex;flex-direction:column;gap:8px;min-height:0}
+.card h2{font-size:24px;letter-spacing:-.4px;line-height:1.1}
+.meta{color:var(--muted);font-size:13px;display:flex;gap:12px;flex-wrap:wrap}
+.meta b{color:var(--ink);font-weight:600}
+.sig{font-size:13px;color:var(--accent2);font-weight:600}
+.desc{font-size:13.5px;color:var(--muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.tag{font-size:11px;font-weight:600;background:rgba(255,255,255,.07);padding:5px 10px;border-radius:999px}
+.stamp{position:absolute;top:32px;z-index:3;font-size:30px;font-weight:900;letter-spacing:1px;padding:6px 16px;border-radius:12px;border:4px solid;opacity:0;pointer-events:none;text-transform:uppercase}
+.stamp.like{left:20px;color:var(--green);border-color:var(--green);transform:rotate(-18deg)}
+.stamp.nope{right:20px;color:var(--accent);border-color:var(--accent);transform:rotate(18deg)}
+.card.enter{animation:cardIn .5s var(--spring)}
+@keyframes cardIn{from{transform:translateY(26px) scale(.92);opacity:0}to{opacity:1}}
+
+.empty{position:absolute;inset:0;border-radius:var(--radius);display:grid;place-items:center;text-align:center;padding:30px;background:var(--card);border:1px dashed rgba(255,255,255,.15);animation:cardIn .5s var(--spring)}
+.empty .big{font-size:56px;animation:float 4s ease-in-out infinite}
+.empty h3{font-size:21px;margin:10px 0 6px}
+.empty p{color:var(--muted);font-size:14px;margin-bottom:18px;max-width:280px}
+
+/* ===== Controls ===== */
+.controls{display:flex;align-items:center;justify-content:center;gap:15px;padding:16px 0 8px;animation:dropIn .6s .1s var(--ease) both}
+.fab{border:none;cursor:pointer;border-radius:50%;display:grid;place-items:center;transition:transform .3s var(--spring),box-shadow .2s;box-shadow:0 12px 28px -10px rgba(0,0,0,.7);position:relative;overflow:hidden}
+.fab:hover{transform:translateY(-5px) scale(1.06)}
+.fab:active{transform:scale(.88)}
+.fab.big{width:66px;height:66px;font-size:27px}
+.fab.sm{width:52px;height:52px;font-size:20px}
+.fab.nope{background:#fff;color:var(--accent)}
+.fab.like{background:linear-gradient(135deg,var(--green),#2bb98a);color:#fff}
+.fab.info{background:#fff;color:#6b4bff}
+.fab.undo{background:rgba(255,255,255,.1);color:var(--accent2)}
+.fab.star{background:rgba(255,255,255,.1);color:var(--accent2)}
+.fab .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.5);transform:scale(0);animation:ripple .5s ease-out;pointer-events:none}
+@keyframes ripple{to{transform:scale(2.4);opacity:0}}
+.hint{text-align:center;color:var(--muted);font-size:12px;padding:2px 0 14px;animation:dropIn .6s .15s var(--ease) both}
+
+/* ===== Desktop sidebar ===== */
+.side{display:none;width:360px;max-width:360px;height:78dvh;flex-direction:column;background:rgba(23,18,50,.6);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:22px;animation:dropIn .7s .1s var(--ease) both;overflow:auto}
+.side h3{font-size:18px;margin-bottom:2px}
+.side .sub{color:var(--muted);font-size:12.5px;margin-bottom:16px}
+
+/* best + list (shared) */
+.best{background:linear-gradient(135deg,rgba(255,90,126,.28),rgba(255,182,72,.2));border:1px solid rgba(255,182,72,.4);border-radius:18px;padding:16px;margin-bottom:16px;display:flex;gap:14px;align-items:center;animation:bestPop .55s var(--spring)}
+@keyframes bestPop{from{transform:scale(.85);opacity:0}to{opacity:1}}
+.best .av,.li .av{border-radius:14px;display:grid;place-items:center;flex:0 0 auto}
+.best .av{width:56px;height:56px;font-size:30px}
+.best .crown{font-size:12px;color:var(--accent2);font-weight:800;letter-spacing:1.2px}
+.best .info b{font-size:17px}
+.best .info small{color:var(--muted);display:block}
+.li{display:flex;align-items:center;gap:12px;padding:11px;border-radius:16px;background:rgba(255,255,255,.04);margin-bottom:10px;animation:slideUp .4s var(--ease) both}
+.li:hover{background:rgba(255,255,255,.08)}
+.li .av{width:46px;height:46px;font-size:23px}
+.li .info{flex:1;min-width:0}
+.li .info b{display:block;font-size:15px}
+.li .info small{color:var(--muted)}
+.li .score{font-weight:800;color:var(--accent2);font-size:15px}
+.li .bar{height:4px;border-radius:3px;background:rgba(255,255,255,.1);margin-top:5px;overflow:hidden}
+.li .bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:width .8s var(--ease)}
+@keyframes slideUp{from{transform:translateY(14px);opacity:0}to{opacity:1}}
+
+/* ===== Bottom sheet (mobile) ===== */
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(5,3,15,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.sheet.open{opacity:1;pointer-events:auto}
+.sheet .panel{background:var(--bg2);width:100%;max-width:480px;border-radius:24px 24px 0 0;padding:18px 22px 34px;transform:translateY(100%);transition:transform .42s var(--spring);max-height:84dvh;overflow:auto;border-top:1px solid rgba(255,255,255,.1)}
+.sheet.open .panel{transform:translateY(0)}
+.grab{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.2);margin:0 auto 14px}
+.panel h3{font-size:20px;margin-bottom:2px}
+.panel .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+
+.btn{width:100%;border:none;cursor:pointer;padding:14px;border-radius:16px;font-size:15px;font-weight:700;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;margin-top:12px;transition:transform .25s var(--spring),filter .2s}
+.btn:hover{filter:brightness(1.08);transform:translateY(-2px)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:rgba(255,255,255,.08);color:var(--ink)}
+
+.toast{position:fixed;bottom:104px;left:50%;transform:translateX(-50%) translateY(24px);background:#fff;color:#1a1430;font-weight:700;font-size:14px;padding:12px 20px;border-radius:999px;opacity:0;transition:transform .35s var(--spring),opacity .3s;z-index:60;box-shadow:0 16px 40px -12px rgba(0,0,0,.6);pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+@keyframes dropIn{from{transform:translateY(-14px);opacity:0}to{opacity:1}}
+
+/* sparkle burst on best choice */
+.spark{position:fixed;width:9px;height:9px;border-radius:2px;pointer-events:none;z-index:70}
+
+/* ===== Desktop breakpoint ===== */
+@media(min-width:920px){
+  .side{display:flex}
+  .app{height:auto;max-width:430px}
+  .deck-wrap{height:64dvh}
+  .shell{align-items:center}
+  .hint{padding-bottom:2px}
+  #btnMatches{display:none}
+}
+@media(min-width:920px) and (max-height:760px){.deck-wrap{height:58dvh}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="app">
+    <header>
+      <div class="logo"><span class="mark">🍴</span><div>Oman <span>Eats</span><small>SWIPE · SAVOUR · DECIDE</small></div></div>
+      <div style="display:flex;gap:8px">
+        <a class="iconbtn talabat-browse" href="https://www.talabat.com/oman/restaurants" target="_blank" rel="noopener" title="Browse every restaurant on Talabat Oman">🛵</a>
+        <button class="iconbtn" id="btnMatches" title="My matches">💚<span class="badge" id="likeBadge">0</span></button>
+      </div>
+    </header>
+    <div class="filters" id="filters"></div>
+    <div class="deck-wrap"><div class="deck" id="deck"></div></div>
+    <div>
+      <div class="controls">
+        <button class="fab sm undo" id="btnUndo" title="Undo (↓)">↩️</button>
+        <button class="fab big nope" id="btnNope" title="Pass (←)">✖️</button>
+        <button class="fab sm info" id="btnInfo" title="Signature dish">ℹ️</button>
+        <button class="fab big like" id="btnLike" title="Save (→)">💚</button>
+        <button class="fab sm star" id="btnStar" title="Best choice">🏆</button>
+      </div>
+      <div class="hint">Drag the card · use ← → keys · or tap the buttons</div>
+    </div>
+  </div>
+
+  <!-- Desktop sidebar: live matches -->
+  <aside class="side">
+    <h3>Your Matches & Best Choice</h3>
+    <div class="sub">Ranked live by your taste — cuisine, vibe, price &amp; rating.</div>
+    <div id="sideBody"></div>
+  </aside>
+</div>
+
+<!-- Mobile bottom sheet -->
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h3>Your Matches & Best Choice</h3>
+    <div class="sub">We rank your saved spots by your taste.</div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Oman Restaurant Database System (ORDS)
+   ============================================================ */
+const ORDS={version:"1.0",country:"Oman",currency:"OMR",restaurants:[
+ {id:1,name:"Bait Al Luban",cuisine:"Omani",area:"Muttrah, Muscat",price:3,avg:12,bestseller:"Lamb Shuwa Platter",rating:4.6,signature:"Omani Shuwa & Frankincense Tea",vibe:["Traditional","Waterfront","Date Night"],desc:"Heritage Omani dining overlooking Muttrah Corniche. Slow-cooked shuwa in a restored old house.",hue:28,emoji:"🏛️"},
+ {id:2,name:"Kargeen Caffe",cuisine:"Arabian",area:"Madinat Sultan Qaboos, Muscat",price:2,avg:6,bestseller:"Grilled Hammour",rating:4.5,signature:"Mixed Grill under the trees",vibe:["Garden","Shisha","Casual"],desc:"Lantern-lit garden seating, Omani–Arabian comfort food, and the city's most relaxed evening hangout.",hue:95,emoji:"🌿"},
+ {id:3,name:"Ubhar",cuisine:"Omani Fusion",area:"Bareeq Al Shatti, Muscat",price:3,avg:13,bestseller:"Camel Burger",rating:4.4,signature:"Camel Burger & Date Ravioli",vibe:["Modern","Creative","Date Night"],desc:"Contemporary takes on Omani classics — camel, shuwa pockets, and frankincense desserts.",hue:280,emoji:"✨"},
+ {id:4,name:"The Beach Restaurant",cuisine:"Seafood",area:"The Chedi, Muscat",price:4,avg:35,bestseller:"Grilled Lobster",rating:4.8,signature:"Lobster & Sea Bass on the sand",vibe:["Luxury","Waterfront","Date Night"],desc:"Toes-in-the-sand fine dining at The Chedi. Pristine seafood and a flawless sunset.",hue:200,emoji:"🦞"},
+ {id:5,name:"Turkish House Restaurant",cuisine:"Turkish",area:"Al Khuwair, Muscat",price:2,avg:5,bestseller:"Adana Kebab",rating:4.3,signature:"Iskender Kebab",vibe:["Family","Casual","Hearty"],desc:"Generous Turkish grills, fresh bread from the oven, and warm hospitality.",hue:8,emoji:"🥙"},
+ {id:6,name:"Bin Ateeq",cuisine:"Omani",area:"Al Khuwair, Muscat",price:1,avg:3,bestseller:"Omani Chicken Thali",rating:4.1,signature:"Authentic Omani Thali (floor seating)",vibe:["Traditional","Budget","Local"],desc:"Private majlis rooms, eat on the floor, true home-style Omani cooking on a budget.",hue:40,emoji:"🍲"},
+ {id:7,name:"Mumtaz Mahal",cuisine:"Indian",area:"Qurum, Muscat",price:3,avg:11,bestseller:"Butter Chicken",rating:4.4,signature:"Murgh Makhani with hilltop views",vibe:["View","Date Night","Classic"],desc:"A Muscat institution perched above Qurum park — North Indian classics and live sitar.",hue:320,emoji:"🏔️"},
+ {id:8,name:"Pavo Real",cuisine:"Mexican",area:"Madinat Sultan Qaboos, Muscat",price:2,avg:7,bestseller:"Chicken Fajitas",rating:4.2,signature:"Sizzling Fajitas & Margaritas",vibe:["Lively","Group","Fun"],desc:"Long-running Tex-Mex spot with a buzzing terrace and live music nights.",hue:130,emoji:"🌮"},
+ {id:9,name:"Slider Station",cuisine:"Burgers",area:"Al Mouj, Muscat",price:2,avg:6,bestseller:"Beef Slider Trio",rating:4.3,signature:"Mini sliders flight",vibe:["Casual","Trendy","Group"],desc:"Industrial-cool burger joint by the marina. Order the slider flight and shakes.",hue:0,emoji:"🍔"},
+ {id:10,name:"Tche Tche",cuisine:"Cafe",area:"Al Qurum, Muscat",price:1,avg:4,bestseller:"Mixed Mezze Platter",rating:4.0,signature:"Shisha & mezze platters",vibe:["Shisha","Casual","Chill"],desc:"Relaxed Lebanese cafe culture — mezze, manakish, and late-night shisha.",hue:160,emoji:"☕"},
+ {id:11,name:"D'Arcy's Kitchen",cuisine:"International",area:"Jawharat A'Shatti, Muscat",price:2,avg:6,bestseller:"Full English Breakfast",rating:4.2,signature:"All-day breakfast & cakes",vibe:["Brunch","Family","Cozy"],desc:"Beloved bistro for big breakfasts, salads, and a legendary cake counter.",hue:50,emoji:"🥞"},
+ {id:12,name:"Khyber Restaurant",cuisine:"Indian",area:"Ruwi, Muscat",price:2,avg:5,bestseller:"Chicken Tikka",rating:4.1,signature:"Tandoori platter",vibe:["Family","Classic","Hearty"],desc:"Old-school Mughlai and tandoor done right in the heart of Ruwi.",hue:18,emoji:"🔥"},
+ {id:13,name:"Al Angham",cuisine:"Omani Fine Dining",area:"Royal Opera House, Muscat",price:4,avg:28,bestseller:"Slow-cooked Shuwa",rating:4.7,signature:"Royal Omani tasting menu",vibe:["Luxury","Date Night","Elegant"],desc:"Palatial Omani fine dining beside the Opera House — carved ceilings, refined cuisine.",hue:265,emoji:"👑"},
+ {id:14,name:"Trader Vic's",cuisine:"Polynesian",area:"InterContinental, Muscat",price:3,avg:15,bestseller:"Wood-fire BBQ Ribs",rating:4.3,signature:"Tiki cocktails & wood-fire oven",vibe:["Lively","Date Night","Fun"],desc:"Island flavours, smoky oven dishes, and famous Mai Tais with live band energy.",hue:175,emoji:"🍹"},
+ {id:15,name:"Begum Restaurant",cuisine:"Pakistani",area:"Al Khuwair, Muscat",price:1,avg:3,bestseller:"Beef Nihari",rating:4.0,signature:"Nihari & fresh naan",vibe:["Budget","Local","Hearty"],desc:"Rich slow-cooked nihari and biryani that locals queue for.",hue:35,emoji:"🍛"},
+ {id:16,name:"Maya Restaurant",cuisine:"Thai",area:"Shangri-La, Muscat",price:4,avg:22,bestseller:"Tom Yum Goong",rating:4.6,signature:"Tom Yum & clifftop sunset",vibe:["Luxury","View","Date Night"],desc:"Authentic Thai high on the Shangri-La cliff with sweeping Sea of Oman views.",hue:150,emoji:"🌅"},
+ {id:17,name:"Zheng He's",cuisine:"Chinese",area:"Shangri-La, Muscat",price:4,avg:25,bestseller:"Peking Duck",rating:4.5,signature:"Peking duck by the bay",vibe:["Luxury","Date Night","Elegant"],desc:"Upscale pan-Asian dining with a seaside terrace and impeccable dim sum.",hue:350,emoji:"🥢"},
+ {id:18,name:"Karak House",cuisine:"Cafe",area:"Seeb, Muscat",price:1,avg:1.5,bestseller:"Karak Chai",rating:3.9,signature:"Karak chai & paratha",vibe:["Budget","Quick","Local"],desc:"The roadside karak ritual — sweet milky tea, eggs, and paratha at any hour.",hue:30,emoji:"🫖"},
+ {id:19,name:"Blue Marlin",cuisine:"Seafood",area:"Marina Bandar Al Rowdha, Muscat",price:3,avg:12,bestseller:"Grilled Kingfish",rating:4.2,signature:"Catch of the day, grilled",vibe:["Waterfront","Family","Casual"],desc:"Marina-side seafood — point at the fresh catch and watch the boats roll in.",hue:210,emoji:"🐟"},
+ {id:20,name:"The Cave Restaurant",cuisine:"International",area:"Al Hajar foothills, Muscat",price:3,avg:14,bestseller:"Mixed Grill Platter",rating:4.4,signature:"Dining inside a natural cave",vibe:["Unique","Date Night","Adventure"],desc:"Eat literally inside a mountain cave — dramatic stone arches and grilled fare.",hue:250,emoji:"🕳️"},
+ {id:21,name:"Nizwa Food Souq",cuisine:"Omani",area:"Nizwa",price:1,avg:2,bestseller:"Omani Halwa",rating:4.0,signature:"Fresh dates & halwa tasting",vibe:["Local","Budget","Market"],desc:"Inland heritage city flavours — Omani halwa, dates, grilled meats near the fort.",hue:42,emoji:"🌰"},
+ {id:22,name:"Sur Beach Seafood",cuisine:"Seafood",area:"Sur",price:2,avg:7,bestseller:"Fried Kingfish",rating:4.1,signature:"Kingfish in the coastal town",vibe:["Waterfront","Local","Casual"],desc:"Dhow-building town on the east coast — just-caught kingfish and lobster.",hue:195,emoji:"⛵"},
+ {id:23,name:"Salalah Spice Garden",cuisine:"Dhofari",area:"Salalah",price:2,avg:8,bestseller:"Coconut Prawn Curry",rating:4.5,signature:"Coconut rice & fresh seafood (Khareef)",vibe:["Tropical","Local","Seasonal"],desc:"Southern Dhofari cuisine — coconut, bananas, and monsoon-green surroundings.",hue:110,emoji:"🥥"},
+ {id:24,name:"Six Senses Zighy Bay",cuisine:"Mediterranean",area:"Musandam",price:4,avg:45,bestseller:"Seafood Mezze",rating:4.9,signature:"Fjord-side tasting menu",vibe:["Luxury","View","Date Night"],desc:"Dramatic Musandam fjords as your backdrop for refined Mediterranean dining.",hue:220,emoji:"🏞️"}
+]};
+
+/* Popular chains — each verified live on Talabat Oman (brand pages checked individually) */
+ORDS.restaurants.push(
+ {id:25,name:"McDonald's",cuisine:"Burgers",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Big Mac Meal",rating:4.2,signature:"Big Mac & McFlurry",vibe:["Fast Food","Family","Quick"],desc:"The global burger giant — Big Macs, McNuggets, fries and McFlurry, delivered fast.",hue:45,emoji:"🍟",talabat:"https://www.talabat.com/oman/mcdonalds"},
+ {id:26,name:"KFC",cuisine:"Fried Chicken",area:"Multiple branches, Oman",price:1,avg:3.5,bestseller:"Zinger Burger",rating:4.4,signature:"Original Recipe bucket",vibe:["Fast Food","Family","Quick"],desc:"Finger-lickin' fried chicken — Zingers, buckets, and hot wings across Oman.",hue:0,emoji:"🍗",talabat:"https://www.talabat.com/oman/kfc"},
+ {id:27,name:"Burger King",cuisine:"Burgers",area:"Multiple branches, Oman",price:1,avg:3.5,bestseller:"Whopper Meal",rating:4.0,signature:"Flame-grilled Whopper",vibe:["Fast Food","Quick","Group"],desc:"Home of the flame-grilled Whopper, chicken fries and dynamite cheese fries.",hue:25,emoji:"🍔",talabat:"https://www.talabat.com/oman/burger-king"},
+ {id:28,name:"Pizza Hut",cuisine:"Pizza",area:"Multiple branches, Oman",price:2,avg:5,bestseller:"My Box",rating:4.2,signature:"Stuffed-crust pizza",vibe:["Family","Group","Casual"],desc:"Pan pizzas, the My Box deal, chicken Alfredo and cheesy bites for sharing.",hue:5,emoji:"🍕",talabat:"https://www.talabat.com/oman/pizza-hut-oman993"},
+ {id:29,name:"Domino's Pizza",cuisine:"Pizza",area:"Multiple branches, Oman",price:2,avg:5,bestseller:"Fiery Chicken Ranch Pizza",rating:4.4,signature:"7-min delivery pizza",vibe:["Quick","Group","Casual"],desc:"Fast pizza specialists — chicken ranch, cheesy bread, wings and potato wedges.",hue:215,emoji:"🍕",talabat:"https://www.talabat.com/oman/dominos-pizza"},
+ {id:30,name:"Subway",cuisine:"Sandwiches",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Chicken Teriyaki Sub",rating:4.2,signature:"Build-your-own sub",vibe:["Fast Food","Healthy","Quick"],desc:"Footlong and 6-inch subs made your way, fresh salads and cookies.",hue:130,emoji:"🥪",talabat:"https://www.talabat.com/oman/subway"},
+ {id:31,name:"Starbucks",cuisine:"Coffee",area:"Multiple branches, Oman",price:2,avg:3,bestseller:"Caramel Macchiato",rating:4.3,signature:"Seasonal Frappuccinos",vibe:["Coffee","Chill","Trendy"],desc:"The coffee staple — lattes, cold brews, Frappuccinos and pastries.",hue:150,emoji:"☕",talabat:"https://www.talabat.com/oman/restaurant/615352/starbucks-shati-al-qurm"},
+ {id:32,name:"Hardee's",cuisine:"Burgers",area:"Multiple branches, Oman",price:1,avg:3.5,bestseller:"The Star Box",rating:4.0,signature:"Charbroiled Thickburgers",vibe:["Fast Food","Quick","Hearty"],desc:"Charbroiled Thickburgers, the Star Box, crispy chicken fillet and curly fries.",hue:30,emoji:"🍔",talabat:"https://www.talabat.com/oman/hardees"},
+ {id:33,name:"Texas Chicken",cuisine:"Fried Chicken",area:"Multiple branches, Oman",price:1,avg:4,bestseller:"Crispy Chicken Bucket",rating:4.2,signature:"Texas-style fried chicken",vibe:["Fast Food","Family","Hearty"],desc:"Bold, big and fresh-fried — chicken buckets, tenders and honey-butter biscuits.",hue:10,emoji:"🍗",talabat:"https://www.talabat.com/oman/texas-chicken"},
+ {id:34,name:"Tim Hortons",cuisine:"Coffee",area:"Multiple branches, Oman",price:1,avg:2.5,bestseller:"French Vanilla & Timbits",rating:4.3,signature:"Timbits & Iced Capp",vibe:["Coffee","Quick","Chill"],desc:"Canadian coffee-and-bake shop — Timbits, Iced Capps, bagels and donuts.",hue:350,emoji:"🍩",talabat:"https://www.talabat.com/oman/tim-hortons"},
+ {id:35,name:"Papa John's",cuisine:"Pizza",area:"Multiple branches, Oman",price:2,avg:5,bestseller:"Spicy Chicken Ranch Pizza",rating:4.6,signature:"Garlic-dip pizza",vibe:["Group","Casual","Quick"],desc:"Better ingredients, better pizza — spicy chicken ranch, pepperoni and the famous garlic dip.",hue:120,emoji:"🍕",talabat:"https://www.talabat.com/oman/papa-johns"},
+ {id:36,name:"Nando's",cuisine:"Peri-Peri Chicken",area:"Multiple branches, Oman",price:3,avg:6,bestseller:"Peri-Peri Chicken",rating:4.4,signature:"Flame-grilled peri-peri chicken",vibe:["Casual","Group","Spicy"],desc:"Flame-grilled peri-peri chicken from mild to extra hot, with halloumi and spicy rice.",hue:355,emoji:"🌶️",talabat:"https://www.talabat.com/oman/nandos"},
+ {id:37,name:"Baskin Robbins",cuisine:"Desserts",area:"Multiple branches, Oman",price:1,avg:2,bestseller:"Ice Cream Sundae",rating:4.0,signature:"31 flavours & ice-cream cakes",vibe:["Dessert","Family","Sweet"],desc:"31 flavours of ice cream, sundaes, milkshakes and celebration cakes.",hue:320,emoji:"🍦",talabat:"https://www.talabat.com/oman/baskin-robbins-khuwair"},
+ {id:38,name:"Costa Coffee",cuisine:"Coffee",area:"Multiple branches, Oman",price:2,avg:3,bestseller:"Caffè Latte",rating:4.0,signature:"Flat whites & croissants",vibe:["Coffee","Chill","Cozy"],desc:"British coffeehouse — lattes, flat whites, croissants and toasted paninis.",hue:345,emoji:"☕",talabat:"https://www.talabat.com/oman/costa-coffee-avenues-mall"},
+ {id:39,name:"Chili's",cuisine:"American",area:"Multiple branches, Oman",price:3,avg:9,bestseller:"Sizzling Fajitas",vibe:["Family","Group","Lively"],rating:4.2,signature:"Baby-back ribs & fajitas",desc:"American grill & bar — sizzling fajitas, baby-back ribs, burgers and bottomless chips.",hue:8,emoji:"🌶️",talabat:"https://www.talabat.com/oman/restaurant/32155/chilis-qurmqurm"},
+ {id:40,name:"Automatic Restaurant",cuisine:"Lebanese",area:"Multiple branches, Oman",price:2,avg:7,bestseller:"Mixed Grill Platter",rating:4.3,signature:"Lebanese mezze & grills",vibe:["Family","Group","Hearty"],desc:"Beloved Lebanese chain — hummus, fattoush, charcoal mixed grills and fresh bread.",hue:35,emoji:"🧆",talabat:"https://www.talabat.com/oman/automatic-lebanese"}
+);
+
+/* Wider variety — at least 10 per category. Buttons resolve via verified Talabat
+   pages, Talabat search (talabat.com/oman/restaurants?query=) or Google Maps. */
+ORDS.restaurants.push(
+ {id:41,cat:"Burgers & Fast Food",name:"Johnny Rockets",cuisine:"American Diner",area:"Multiple branches, Oman",price:2,avg:6,bestseller:"The Original Burger",rating:4.2,signature:"Diner burgers & shakes",vibe:["Diner","Family","Fun"],desc:"All-American diner burgers, fries and thick shakes.",hue:350,emoji:"🍔"},
+ {id:42,cat:"Burgers & Fast Food",name:"Fatburger",cuisine:"Burgers",area:"Multiple branches, Oman",price:2,avg:6,bestseller:"Fatburger XXL",rating:4.1,signature:"Cooked-to-order burgers",vibe:["Casual","Hearty","Group"],desc:"Big juicy cooked-to-order burgers and onion rings.",hue:15,emoji:"🍔"},
+ {id:43,cat:"Burgers & Fast Food",name:"Elevation Burger",cuisine:"Burgers",area:"Multiple branches, Oman",price:2,avg:6,bestseller:"Organic Double",rating:4.2,signature:"Organic grass-fed burgers",vibe:["Healthy","Trendy","Casual"],desc:"Organic, grass-fed beef burgers and fresh-cut fries.",hue:120,emoji:"🍔"},
+ {id:44,cat:"Burgers & Fast Food",name:"Tickles",cuisine:"Burgers",area:"Muscat, Oman",price:2,avg:5,bestseller:"Cheese Tickler",rating:4.1,signature:"Homegrown Omani burgers",vibe:["Local","Casual","Fun"],desc:"Homegrown Muscat burger favourite with loaded fries.",hue:40,emoji:"🍔"},
+ {id:45,cat:"Burgers & Fast Food",name:"Buffalo Wings & Rings",cuisine:"American",area:"Multiple branches, Oman",price:2,avg:7,bestseller:"Buffalo Wings",rating:4.0,signature:"Wings & sports bites",vibe:["Group","Sports","Lively"],desc:"Saucy wings, rings and burgers for game night.",hue:25,emoji:"🍗"},
+ {id:46,cat:"Burgers & Fast Food",name:"Hashtag Burger",cuisine:"Burgers",area:"Muscat, Oman",price:2,avg:5,bestseller:"Double Smash",rating:4.0,signature:"Smash burgers",vibe:["Trendy","Casual","Quick"],desc:"Smashed-patty burgers with secret sauce.",hue:200,emoji:"🍔"},
+
+ {id:47,cat:"Pizza & Italian",name:"Little Caesars",cuisine:"Pizza",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Hot-N-Ready",rating:4.1,signature:"Ready-to-go pizza",vibe:["Quick","Budget","Family"],desc:"Affordable ready-to-grab pepperoni pizzas.",hue:30,emoji:"🍕"},
+ {id:48,cat:"Pizza & Italian",name:"Debonairs Pizza",cuisine:"Pizza",area:"Multiple branches, Oman",price:2,avg:4,bestseller:"Triple-Decker",rating:4.0,signature:"Loaded stuffed pizzas",vibe:["Group","Casual","Fun"],desc:"Over-the-top stuffed and triple-decker pizzas.",hue:350,emoji:"🍕"},
+ {id:49,cat:"Pizza & Italian",name:"Maestro Pizza",cuisine:"Pizza",area:"Multiple branches, Oman",price:2,avg:4,bestseller:"Cheese Crust",rating:4.1,signature:"Value pizzas",vibe:["Budget","Family","Quick"],desc:"Generous value pizzas with cheese-stuffed crust.",hue:0,emoji:"🍕"},
+ {id:50,cat:"Pizza & Italian",name:"Sbarro",cuisine:"Italian",area:"Multiple branches, Oman",price:2,avg:5,bestseller:"NY XL Slice",rating:4.0,signature:"New York slices",vibe:["Mall","Quick","Casual"],desc:"Giant New York-style slices and pasta.",hue:10,emoji:"🍕"},
+ {id:51,cat:"Pizza & Italian",name:"Pizza Express",cuisine:"Italian",area:"Muscat, Oman",price:3,avg:7,bestseller:"Margherita",rating:4.2,signature:"Wood-fired classics",vibe:["Casual","Date Night","Cozy"],desc:"Wood-fired Italian classics and dough balls.",hue:140,emoji:"🍕"},
+ {id:52,cat:"Pizza & Italian",name:"Roman's Pizza",cuisine:"Pizza",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Mega Deal",rating:3.9,signature:"Big-deal pizzas",vibe:["Budget","Group","Quick"],desc:"Big shareable deal pizzas at low prices.",hue:25,emoji:"🍕"},
+ {id:53,cat:"Pizza & Italian",name:"Bella Italia",cuisine:"Italian",area:"Muscat, Oman",price:3,avg:8,bestseller:"Spaghetti Bolognese",rating:4.2,signature:"Trattoria pasta",vibe:["Date Night","Cozy","Classic"],desc:"Cosy trattoria pastas, risottos and tiramisu.",hue:120,emoji:"🍝"},
+
+ {id:54,cat:"Chicken",name:"Chicking",cuisine:"Fried Chicken",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Crispy Zinger",rating:4.0,signature:"Halal fried chicken",vibe:["Quick","Budget","Family"],desc:"Crispy halal fried chicken, burgers and wraps.",hue:35,emoji:"🍗"},
+ {id:55,cat:"Chicken",name:"Al Tazaj",cuisine:"Grilled Chicken",area:"Multiple branches, Oman",price:2,avg:4,bestseller:"Charcoal Chicken",rating:4.1,signature:"Saudi charcoal chicken",vibe:["Family","Casual","Hearty"],desc:"Flame-charcoal whole chicken with garlic sauce.",hue:0,emoji:"🍗"},
+ {id:56,cat:"Chicken",name:"Chicken Tikka Inn",cuisine:"Grilled Chicken",area:"Muscat, Oman",price:1,avg:3,bestseller:"Chicken Tikka",rating:4.0,signature:"Desi grilled chicken",vibe:["Local","Budget","Hearty"],desc:"Smoky desi chicken tikka and rolls.",hue:18,emoji:"🍗"},
+ {id:57,cat:"Chicken",name:"Broast Corner",cuisine:"Fried Chicken",area:"Muscat, Oman",price:1,avg:2.5,bestseller:"Broasted Quarter",rating:3.9,signature:"Pressure-fried chicken",vibe:["Budget","Quick","Local"],desc:"Crunchy broasted chicken with garlic dip.",hue:40,emoji:"🍗"},
+ {id:58,cat:"Chicken",name:"Hala Chicken",cuisine:"Grilled Chicken",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Grilled Half Chicken",rating:4.0,signature:"Rotisserie chicken",vibe:["Family","Budget","Quick"],desc:"Juicy rotisserie chicken meals with rice.",hue:45,emoji:"🍗"},
+ {id:59,cat:"Chicken",name:"Popeyes",cuisine:"Fried Chicken",area:"Multiple branches, Oman",price:2,avg:4,bestseller:"Chicken Sandwich",rating:4.2,signature:"Louisiana fried chicken",vibe:["Quick","Trendy","Hearty"],desc:"Louisiana-spiced fried chicken and biscuits.",hue:25,emoji:"🍗"},
+ {id:60,cat:"Chicken",name:"Texas Charcoal Chicken",cuisine:"Grilled Chicken",area:"Muscat, Oman",price:2,avg:4,bestseller:"Peri Half Chicken",rating:4.0,signature:"Peri charcoal chicken",vibe:["Casual","Spicy","Family"],desc:"Charcoal peri-peri chicken platters.",hue:20,emoji:"🍗"},
+
+ {id:61,cat:"Indian & Pakistani",name:"Spicy Village",cuisine:"Indian",area:"Muscat, Oman",price:2,avg:5,bestseller:"Chicken Biryani",rating:4.2,signature:"North Indian curries",vibe:["Family","Hearty","Classic"],desc:"Aromatic biryanis and rich North Indian curries.",hue:22,emoji:"🍛"},
+ {id:62,cat:"Indian & Pakistani",name:"Saravanaa Bhavan",cuisine:"South Indian",area:"Muscat, Oman",price:1,avg:3,bestseller:"Masala Dosa",rating:4.3,signature:"Veg South Indian",vibe:["Veg","Budget","Family"],desc:"Crispy dosas, idli and filter coffee.",hue:40,emoji:"🍛"},
+ {id:63,cat:"Indian & Pakistani",name:"Copper Chimney",cuisine:"Indian",area:"Muscat, Oman",price:3,avg:9,bestseller:"Butter Chicken",rating:4.3,signature:"Refined Indian dining",vibe:["Date Night","Classic","Elegant"],desc:"Refined North Indian grills and curries.",hue:320,emoji:"🍛"},
+ {id:64,cat:"Indian & Pakistani",name:"Woodlands",cuisine:"Indian",area:"Muscat, Oman",price:2,avg:6,bestseller:"Veg Thali",rating:4.1,signature:"Pure-veg Indian",vibe:["Veg","Family","Classic"],desc:"Long-loved pure-veg Indian thalis.",hue:120,emoji:"🍛"},
+ {id:65,cat:"Indian & Pakistani",name:"Khana Khazana",cuisine:"Indian",area:"Muscat, Oman",price:2,avg:5,bestseller:"Hyderabadi Biryani",rating:4.0,signature:"Biryani specialists",vibe:["Hearty","Family","Local"],desc:"Dum-cooked Hyderabadi biryani and kebabs.",hue:18,emoji:"🍛"},
+ {id:66,cat:"Indian & Pakistani",name:"Ananda Bhavan",cuisine:"South Indian",area:"Muscat, Oman",price:1,avg:3,bestseller:"Idli Sambar",rating:4.0,signature:"South Indian tiffin",vibe:["Veg","Budget","Quick"],desc:"Tiffin classics — idli, vada and dosa.",hue:45,emoji:"🍛"},
+ {id:67,cat:"Indian & Pakistani",name:"Curry Leaf",cuisine:"Indian",area:"Muscat, Oman",price:2,avg:5,bestseller:"Kerala Fish Meals",rating:4.1,signature:"Kerala cuisine",vibe:["Local","Hearty","Family"],desc:"Kerala fish curry meals and appam.",hue:30,emoji:"🍛"},
+
+ {id:68,cat:"Arabian & Omani",name:"Al Tannour Lebanese",cuisine:"Lebanese",area:"Muscat, Oman",price:2,avg:7,bestseller:"Mixed Grill",rating:4.2,signature:"Lebanese mezze & grills",vibe:["Family","Group","Hearty"],desc:"Charcoal Lebanese grills and fresh mezze.",hue:35,emoji:"🧆",talabat:"https://www.talabat.com/oman/al-tannour-lebanese-restaurant"},
+ {id:69,cat:"Arabian & Omani",name:"Baalbek",cuisine:"Lebanese",area:"Muscat, Oman",price:2,avg:7,bestseller:"Shish Tawook",rating:4.1,signature:"Lebanese home cooking",vibe:["Family","Casual","Hearty"],desc:"Generous Lebanese platters and saj bread.",hue:40,emoji:"🧆",talabat:"https://www.talabat.com/oman/baalbek"},
+
+ {id:70,cat:"Cafe & Coffee",name:"Dunkin'",cuisine:"Cafe",area:"Multiple branches, Oman",price:1,avg:2.5,bestseller:"Box of Donuts",rating:4.5,signature:"Donuts & coffee",vibe:["Quick","Sweet","Casual"],desc:"Donuts, Munchkins and iced coffee runs.",hue:345,emoji:"🍩",talabat:"https://www.talabat.com/oman/dunkin-mall-of-oman"},
+ {id:71,cat:"Cafe & Coffee",name:"Second Cup",cuisine:"Coffee",area:"Multiple branches, Oman",price:2,avg:3,bestseller:"Hazelnut Latte",rating:4.5,signature:"Canadian coffeehouse",vibe:["Coffee","Chill","Cozy"],desc:"Specialty lattes, Correttos and cakes.",hue:25,emoji:"☕",talabat:"https://www.talabat.com/oman/second-cup"},
+ {id:72,cat:"Cafe & Coffee",name:"Caribou Coffee",cuisine:"Coffee",area:"Multiple branches, Oman",price:2,avg:3,bestseller:"Caramel Cooler",rating:4.1,signature:"American coffeehouse",vibe:["Coffee","Chill","Trendy"],desc:"Hand-crafted coffees and Coolers.",hue:200,emoji:"☕"},
+ {id:73,cat:"Cafe & Coffee",name:"Caffè Nero",cuisine:"Coffee",area:"Muscat, Oman",price:2,avg:3,bestseller:"Flat White",rating:4.0,signature:"Italian coffeehouse",vibe:["Coffee","Cozy","Classic"],desc:"Italian-style espresso and panini.",hue:350,emoji:"☕"},
+ {id:74,cat:"Cafe & Coffee",name:"PAUL",cuisine:"Bakery Cafe",area:"Muscat, Oman",price:3,avg:6,bestseller:"Croissant & Coffee",rating:4.2,signature:"French bakery cafe",vibe:["Brunch","Cozy","Trendy"],desc:"French bakery — croissants, tarts and quiche.",hue:40,emoji:"🥐"},
+
+ {id:75,cat:"Desserts & Sweets",name:"Cold Stone Creamery",cuisine:"Ice Cream",area:"Multiple branches, Oman",price:2,avg:4,bestseller:"Signature Creation",rating:4.2,signature:"Mix-in ice cream",vibe:["Dessert","Fun","Family"],desc:"Ice cream smashed with your favourite mix-ins.",hue:320,emoji:"🍨"},
+ {id:76,cat:"Desserts & Sweets",name:"Häagen-Dazs",cuisine:"Ice Cream",area:"Multiple branches, Oman",price:3,avg:6,bestseller:"Belgian Chocolate",rating:4.3,signature:"Premium ice cream",vibe:["Dessert","Date Night","Treat"],desc:"Premium scoops and decadent sundaes.",hue:300,emoji:"🍨"},
+ {id:77,cat:"Desserts & Sweets",name:"Cinnabon",cuisine:"Bakery",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Classic Roll",rating:4.2,signature:"Cinnamon rolls",vibe:["Sweet","Mall","Treat"],desc:"Warm gooey cinnamon rolls and Minibon.",hue:30,emoji:"🥐"},
+ {id:78,cat:"Desserts & Sweets",name:"Krispy Kreme",cuisine:"Bakery",area:"Multiple branches, Oman",price:2,avg:4,bestseller:"Original Glazed Dozen",rating:4.4,signature:"Glazed donuts",vibe:["Sweet","Family","Treat"],desc:"Melt-in-mouth Original Glazed doughnuts.",hue:140,emoji:"🍩"},
+ {id:79,cat:"Desserts & Sweets",name:"Gelato Divino",cuisine:"Ice Cream",area:"Muscat, Oman",price:2,avg:4,bestseller:"Pistachio Gelato",rating:4.1,signature:"Italian gelato",vibe:["Dessert","Trendy","Treat"],desc:"Artisan Italian gelato in dozens of flavours.",hue:200,emoji:"🍦"},
+ {id:80,cat:"Desserts & Sweets",name:"Cookie Man",cuisine:"Bakery",area:"Multiple branches, Oman",price:1,avg:2,bestseller:"Choc Chip Cookies",rating:4.0,signature:"Fresh cookies",vibe:["Sweet","Quick","Treat"],desc:"Warm freshly-baked cookies by weight.",hue:35,emoji:"🍪"},
+ {id:81,cat:"Desserts & Sweets",name:"Crepe Cafe",cuisine:"Desserts",area:"Muscat, Oman",price:2,avg:4,bestseller:"Nutella Crepe",rating:4.0,signature:"Crepes & waffles",vibe:["Dessert","Casual","Sweet"],desc:"Sweet crepes, waffles and milkshakes.",hue:40,emoji:"🥞"},
+ {id:82,cat:"Desserts & Sweets",name:"Bait Al Halwa",cuisine:"Omani Sweets",area:"Muscat, Oman",price:1,avg:2,bestseller:"Omani Halwa",rating:4.1,signature:"Traditional Omani sweets",vibe:["Local","Traditional","Treat"],desc:"Authentic Omani halwa and date sweets.",hue:42,emoji:"🍮"},
+ {id:83,cat:"Desserts & Sweets",name:"Amorino",cuisine:"Ice Cream",area:"Muscat, Oman",price:3,avg:5,bestseller:"Gelato Flower",rating:4.2,signature:"Gelato flowers",vibe:["Dessert","Trendy","Date Night"],desc:"Gelato sculpted into roses and macarons.",hue:320,emoji:"🍦"},
+
+ {id:84,cat:"Seafood",name:"Ocean Basket",cuisine:"Seafood",area:"Multiple branches, Oman",price:3,avg:9,bestseller:"Seafood Platter",rating:4.2,signature:"Mediterranean seafood",vibe:["Family","Casual","Group"],desc:"Shareable seafood platters and calamari.",hue:200,emoji:"🐟"},
+ {id:85,cat:"Seafood",name:"The Fish Market",cuisine:"Seafood",area:"Muscat, Oman",price:3,avg:12,bestseller:"Grilled Hammour",rating:4.3,signature:"Pick-your-catch",vibe:["Waterfront","Date Night","Fresh"],desc:"Pick your fresh catch, grilled to order.",hue:210,emoji:"🐟"},
+ {id:86,cat:"Seafood",name:"Bin Hamoud Seafood",cuisine:"Seafood",area:"Muscat, Oman",price:2,avg:6,bestseller:"Prawn Masala",rating:4.0,signature:"Omani seafood",vibe:["Local","Hearty","Casual"],desc:"Local-style prawn masala and fish rice.",hue:195,emoji:"🦐"},
+ {id:87,cat:"Seafood",name:"The Lighthouse",cuisine:"Seafood",area:"Muscat, Oman",price:4,avg:20,bestseller:"Lobster Thermidor",rating:4.4,signature:"Fine seafood dining",vibe:["Luxury","Date Night","View"],desc:"Upscale seafood with harbour views.",hue:205,emoji:"🦞"},
+ {id:88,cat:"Seafood",name:"Catch",cuisine:"Seafood",area:"Muscat, Oman",price:2,avg:7,bestseller:"Fish & Chips",rating:4.1,signature:"Casual seafood",vibe:["Casual","Quick","Family"],desc:"Crispy fish & chips and seafood baskets.",hue:215,emoji:"🐟"},
+ {id:89,cat:"Seafood",name:"Al Bahar Seafood",cuisine:"Seafood",area:"Muscat, Oman",price:3,avg:10,bestseller:"Crab Curry",rating:4.0,signature:"Coastal seafood",vibe:["Local","Hearty","Casual"],desc:"Coastal crab curry and grilled kingfish.",hue:190,emoji:"🦀"},
+
+ {id:90,cat:"Asian",name:"Chowking",cuisine:"Filipino-Chinese",area:"Multiple branches, Oman",price:1,avg:4,bestseller:"Chao Fan & Siomai",rating:4.0,signature:"Chinese-Filipino fast food",vibe:["Quick","Budget","Casual"],desc:"Chao fan, siomai and halo-halo.",hue:10,emoji:"🥡"},
+ {id:91,cat:"Asian",name:"Wagamama",cuisine:"Japanese",area:"Muscat, Oman",price:3,avg:9,bestseller:"Chicken Katsu Curry",rating:4.2,signature:"Pan-Asian noodles",vibe:["Trendy","Casual","Group"],desc:"Ramen, katsu curry and fresh juices.",hue:0,emoji:"🍜"},
+ {id:92,cat:"Asian",name:"The Noodle House",cuisine:"Pan-Asian",area:"Muscat, Oman",price:2,avg:7,bestseller:"Singapore Noodles",rating:4.1,signature:"Asian street food",vibe:["Casual","Family","Group"],desc:"Wok noodles, dim sum and curries.",hue:30,emoji:"🍜"},
+ {id:93,cat:"Asian",name:"China Mood",cuisine:"Chinese",area:"Muscat, Oman",price:3,avg:10,bestseller:"Dim Sum Platter",rating:4.2,signature:"Authentic Chinese",vibe:["Date Night","Classic","Elegant"],desc:"Cantonese dim sum and Peking specialties.",hue:350,emoji:"🥢"},
+ {id:94,cat:"Asian",name:"Golden Dragon",cuisine:"Chinese",area:"Muscat, Oman",price:2,avg:7,bestseller:"Sweet & Sour Chicken",rating:4.0,signature:"Classic Chinese",vibe:["Family","Classic","Casual"],desc:"Old-school Chinese-takeaway favourites.",hue:0,emoji:"🥢"},
+ {id:95,cat:"Asian",name:"Bamboo",cuisine:"Pan-Asian",area:"Muscat, Oman",price:3,avg:8,bestseller:"Pad Thai",rating:4.1,signature:"Southeast Asian",vibe:["Trendy","Group","Casual"],desc:"Thai, Vietnamese and Malay street dishes.",hue:120,emoji:"🎍"},
+ {id:96,cat:"Asian",name:"Mr. Lee's",cuisine:"Asian Noodles",area:"Multiple branches, Oman",price:1,avg:3,bestseller:"Beef Ramen",rating:3.9,signature:"Gourmet noodle cups",vibe:["Quick","Budget","Casual"],desc:"Customised gourmet noodle cups.",hue:40,emoji:"🍜"},
+ {id:97,cat:"Asian",name:"Sushi Counter",cuisine:"Japanese",area:"Muscat, Oman",price:3,avg:9,bestseller:"Salmon Maki",rating:4.2,signature:"Sushi & rolls",vibe:["Trendy","Date Night","Fresh"],desc:"Fresh maki, nigiri and poke bowls.",hue:200,emoji:"🍣"},
+
+ {id:98,cat:"American & Intl",name:"Fuddruckers",cuisine:"American",area:"Multiple branches, Oman",price:3,avg:8,bestseller:"World's Greatest Burger",rating:4.1,signature:"Build-your-own burgers",vibe:["Family","Group","Hearty"],desc:"Cooked-to-order burgers at the topping bar.",hue:25,emoji:"🍔"},
+ {id:99,cat:"American & Intl",name:"TGI Fridays",cuisine:"American",area:"Muscat, Oman",price:3,avg:10,bestseller:"Jack Daniel's Ribs",rating:4.0,signature:"American bar & grill",vibe:["Group","Lively","Fun"],desc:"Glazed ribs, loaded potato skins and shakes.",hue:0,emoji:"🍤"},
+ {id:100,cat:"American & Intl",name:"Applebee's",cuisine:"American",area:"Muscat, Oman",price:3,avg:9,bestseller:"Riblets Platter",rating:4.0,signature:"Neighbourhood grill",vibe:["Family","Casual","Group"],desc:"American grill classics and combos.",hue:120,emoji:"🍗"},
+ {id:101,cat:"American & Intl",name:"Texas Roadhouse",cuisine:"Steakhouse",area:"Muscat, Oman",price:3,avg:12,bestseller:"Ribeye Steak",rating:4.3,signature:"Hand-cut steaks",vibe:["Hearty","Date Night","Group"],desc:"Hand-cut steaks, ribs and warm rolls.",hue:20,emoji:"🥩"}
+);
+
+ORDS.cuisines=[...new Set(ORDS.restaurants.map(r=>r.cuisine))].sort();
+
+/* Verified live Talabat Oman menu pages (checked individually).
+   Restaurants not listed here are dine-in only / not on Talabat. */
+const TALABAT={
+ 2:"https://www.talabat.com/oman/restaurant/5377/kargeen-madinat-qaboos",
+ 3:"https://www.talabat.com/oman/restaurant/26711/ubharshati-al-qurm",
+ 5:"https://www.talabat.com/oman/restaurant/33754/turkish-house-restaurantal-khuwayr-north",
+ 6:"https://www.talabat.com/oman/restaurant/30552/bin-ateeq-al-khuwayr-north",
+ 7:"https://www.talabat.com/oman/restaurant/43325/mumtaz-mahal-restaurant-qurm",
+ 8:"https://www.talabat.com/oman/pavo-real",
+ 9:"https://www.talabat.com/oman/restaurant/48871/slider-stationqurm",
+ 11:"https://www.talabat.com/oman/restaurant/50841/darcys-kitchen-shati-al-qurm",
+ 12:"https://www.talabat.com/oman/restaurant/11553/khyber-restaurant-cbd",
+ 15:"https://www.talabat.com/oman/restaurant/604232/begums-restaurant-al-khuwayr-south"
+};
+/* Category for each original restaurant (1-40); chains/extras carry their own cat */
+const CATMAP={1:"Arabian & Omani",2:"Arabian & Omani",3:"Arabian & Omani",4:"Seafood",5:"Arabian & Omani",6:"Arabian & Omani",7:"Indian & Pakistani",8:"American & Intl",9:"Burgers & Fast Food",10:"Cafe & Coffee",11:"American & Intl",12:"Indian & Pakistani",13:"Arabian & Omani",14:"American & Intl",15:"Indian & Pakistani",16:"Asian",17:"Asian",18:"Cafe & Coffee",19:"Seafood",20:"American & Intl",21:"Arabian & Omani",22:"Seafood",23:"Seafood",24:"American & Intl",25:"Burgers & Fast Food",26:"Chicken",27:"Burgers & Fast Food",28:"Pizza & Italian",29:"Pizza & Italian",30:"Burgers & Fast Food",31:"Cafe & Coffee",32:"Burgers & Fast Food",33:"Chicken",34:"Cafe & Coffee",35:"Pizza & Italian",36:"Chicken",37:"Desserts & Sweets",38:"Cafe & Coffee",39:"American & Intl",40:"Arabian & Omani"};
+/* Genuine dine-in only venues (hotels/destination) — no Talabat delivery */
+const NO_TLB=new Set([4,13,14,16,17,20,24]);
+ORDS.restaurants.forEach(r=>{
+  if(r.talabat==null) r.talabat=TALABAT[r.id]||undefined;     // verified page if we have one
+  if(NO_TLB.has(r.id)) r.talabat=false;                       // dine-in only
+  r.cat=r.cat||CATMAP[r.id]||r.cuisine;                       // category for filtering
+});
+/* Talabat link for any restaurant: verified page, else a real Talabat search */
+function talabatUrl(r){
+  if(r.talabat===false) return null;
+  return r.talabat||("https://www.talabat.com/oman/restaurants?query="+encodeURIComponent(r.name));
+}
+ORDS.cats=["All","Burgers & Fast Food","Pizza & Italian","Chicken","Indian & Pakistani","Asian","Seafood","American & Intl","Arabian & Omani","Cafe & Coffee","Desserts & Sweets"];
+
+/* ============================================================
+   Engine
+   ============================================================ */
+const $=(s,el=document)=>el.querySelector(s), $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const PRICE=["","OMR","OMR·OMR","OMR·OMR·OMR","OMR·OMR·OMR·OMR"];
+const PRICE_LABEL=["","Budget","Mid","Upscale","Fine dining"];
+const state={filter:"All",queue:[],liked:[],passed:[],history:[]};
+
+function buildFilters(){
+  const bar=$("#filters");
+  bar.innerHTML=ORDS.cats.map((c,i)=>`<button class="chip ${i?"":"active"}" data-c="${c}">${c}</button>`).join("");
+  $$(".chip",bar).forEach(ch=>ch.addEventListener("click",()=>{
+    $$(".chip",bar).forEach(c=>c.classList.remove("active"));ch.classList.add("active");
+    state.filter=ch.dataset.c;resetQueue();
+  }));
+}
+function resetQueue(){
+  const seen=new Set([...state.liked,...state.passed].map(r=>r.id));
+  state.queue=ORDS.restaurants.filter(r=>state.filter==="All"||r.cat===state.filter).filter(r=>!seen.has(r.id));
+  renderDeck();
+}
+function grad(r,l1=32,l2=20){return `linear-gradient(160deg,hsl(${r.hue} 70% ${l1}%),hsl(${(r.hue+40)%360} 65% ${l2}%))`}
+const STOP=new Set(["al","the","de","la","el","and"]);
+function initials(n){const w=n.replace(/[^A-Za-z' ]/g," ").split(/\s+/).filter(x=>x&&!STOP.has(x.toLowerCase()));const a=(w[0]||"")[0]||"";const b=(w[1]||"")[0]||(w[0]||"")[1]||"";return (a+b).toUpperCase();}
+function brand(r,cls){return `<div class="brand ${cls}" style="background:${grad(r,44,28)}">${initials(r.name)}<span class="em">${r.emoji}</span></div>`;}
+function maps(r){const q=r.name+" "+r.area.replace("Multiple branches, ","");return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(q);}
+function cardHTML(r){
+  return `<div class="card" data-id="${r.id}">
+    <div class="stamp like">Yum</div><div class="stamp nope">Nope</div>
+    <div class="hero" style="background:${grad(r)}">${brand(r,"hero-brand")}
+      <div class="pill price">💰 ~${r.avg} OMR</div><div class="pill rating">★ ${r.rating.toFixed(1)}</div></div>
+    <div class="body"><h2>${r.name}</h2>
+      <div class="meta"><span>📍 <b>${r.area}</b></span><span>🍽️ ${r.cuisine}</span><span>${PRICE_LABEL[r.price]}</span></div>
+      <div class="sig">🌟 ${r.signature}</div>
+      <div class="sell">🔥 Bestseller: <b>${r.bestseller}</b></div>
+      <div class="desc">${r.desc}</div>
+      <div class="tags">${r.vibe.map(v=>`<span class="tag">${v}</span>`).join("")}</div>
+      <div class="acts">
+        ${talabatUrl(r)?`<a class="tlb" href="${talabatUrl(r)}" target="_blank" rel="noopener" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()" onclick="event.stopPropagation()">🛵 Talabat</a>`:`<div class="tlb off">🍽️ Dine-in only</div>`}
+        <a class="gmap" href="${maps(r)}" target="_blank" rel="noopener" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()" onclick="event.stopPropagation()">📍 Maps</a>
+      </div>
+      </div></div>`;
+}
+function renderDeck(){
+  const deck=$("#deck");deck.innerHTML="";
+  if(!state.queue.length){
+    deck.innerHTML=`<div class="empty"><div><div class="big">🍽️</div>
+      <h3>That's everything!</h3>
+      <p>You've browsed all ${state.filter==="All"?"":state.filter+" "}spots.
+      ${state.liked.length?"Check your matches for the winner.":"Try another filter."}</p>
+      <button class="btn" onclick="openSheet()">View matches (${state.liked.length})</button>
+      <button class="btn ghost" onclick="reshuffle()">Start over</button></div></div>`;
+    updateBadges();return;
+  }
+  const top3=state.queue.slice(0,3).reverse();
+  top3.forEach((r,i)=>{
+    deck.insertAdjacentHTML("beforeend",cardHTML(r));
+    const card=deck.lastElementChild,depth=top3.length-1-i;
+    card.style.transform=`translateY(${depth*12}px) scale(${1-depth*.045})`;
+    card.style.zIndex=10-depth;card.style.opacity=depth>1?.55:1;
+    if(depth===0){card.classList.add("enter");attachDrag(card,r);}
+  });
+  updateBadges();
+}
+function updateBadges(){
+  $("#likeBadge").textContent=state.liked.length;
+  $("#likeBadge").style.display=state.liked.length?"grid":"none";
+  renderMatches($("#sideBody"));
+}
+function attachDrag(card,r){
+  let sx=0,sy=0,dx=0,dy=0,drag=false;
+  const down=(x,y)=>{drag=true;sx=x;sy=y;card.classList.add("dragging")};
+  const move=(x,y)=>{if(!drag)return;dx=x-sx;dy=y-sy;
+    card.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/18}deg)`;
+    const t=Math.min(Math.abs(dx)/120,1);
+    $(".stamp.like",card).style.opacity=dx>0?t:0;$(".stamp.nope",card).style.opacity=dx<0?t:0;};
+  const up=()=>{if(!drag)return;drag=false;card.classList.remove("dragging");
+    if(Math.abs(dx)>108)decide(dx>0?"like":"pass");
+    else{card.style.transform="";$(".stamp.like",card).style.opacity=0;$(".stamp.nope",card).style.opacity=0;}
+    dx=dy=0;};
+  card.addEventListener("mousedown",e=>down(e.clientX,e.clientY));
+  window.addEventListener("mousemove",e=>move(e.clientX,e.clientY));
+  window.addEventListener("mouseup",up);
+  card.addEventListener("touchstart",e=>down(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  card.addEventListener("touchmove",e=>move(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+  card.addEventListener("touchend",up);
+}
+function decide(action){
+  const r=state.queue.shift();if(!r)return;
+  const card=$(`.card[data-id="${r.id}"]`);
+  if(card){const d=action==="like"?1:-1;
+    card.style.transition="transform .45s ease,opacity .45s";
+    card.style.transform=`translate(${d*640}px,-50px) rotate(${d*32}deg)`;card.style.opacity=0;}
+  if(action==="like"){state.liked.push(r);toast(`Saved ${r.name} 😋`);}
+  else state.passed.push(r);
+  state.history.push({r,action});
+  save();
+  setTimeout(renderDeck,170);
+}
+function undo(){
+  const last=state.history.pop();if(!last){toast("Nothing to undo");return;}
+  if(last.action==="like")state.liked=state.liked.filter(x=>x.id!==last.r.id);
+  else state.passed=state.passed.filter(x=>x.id!==last.r.id);
+  state.queue.unshift(last.r);save();renderDeck();toast("Brought it back ↩️");
+}
+function reshuffle(){state.passed=[];state.history=[];save();resetQueue();}
+
+/* taste model */
+function buildPrefs(){
+  const p={cuisine:{},vibe:{},avgPrice:2};
+  if(!state.liked.length)return p;let sum=0;
+  state.liked.forEach(r=>{p.cuisine[r.cuisine]=(p.cuisine[r.cuisine]||0)+1;
+    r.vibe.forEach(v=>p.vibe[v]=(p.vibe[v]||0)+1);sum+=r.price;});
+  p.avgPrice=sum/state.liked.length;return p;
+}
+function scoreFor(r,p){let s=r.rating*10;s+=(p.cuisine[r.cuisine]||0)*8;
+  r.vibe.forEach(v=>s+=(p.vibe[v]||0)*5);s-=Math.abs(r.price-p.avgPrice)*4;return s;}
+
+function renderMatches(wrap){
+  if(!wrap)return;
+  if(!state.liked.length){wrap.innerHTML=`<p style="color:var(--muted);font-size:13.5px;padding:24px 4px;text-align:center">No matches yet — swipe right (or tap 💚) on spots you like and your <b style="color:var(--accent2)">best choice</b> appears here.</p>`;return;}
+  const p=buildPrefs();
+  const ranked=[...state.liked].map(r=>({r,score:scoreFor(r,p)})).sort((a,b)=>b.score-a.score);
+  const best=ranked[0].r,max=ranked[0].score;
+  wrap.innerHTML=`
+    <div class="best">${brand(best,"best-brand")}
+      <div class="info"><div class="crown">👑 YOUR BEST CHOICE</div><b>${best.name}</b>
+      <small>${best.area} · ${best.cuisine} · ★${best.rating} · ~${best.avg} OMR</small>
+      <small>🔥 ${best.bestseller}</small></div></div>
+    <div class="acts">
+      ${talabatUrl(best)?`<a class="tlb" href="${talabatUrl(best)}" target="_blank" rel="noopener">🛵 Order on Talabat</a>`:`<div class="tlb off">🍽️ Dine-in only</div>`}
+      <a class="gmap" href="${maps(best)}" target="_blank" rel="noopener">📍 Google Maps</a>
+    </div>
+    <div style="font-size:12.5px;color:var(--muted);margin:14px 2px 10px">${state.liked.length} saved · ranked by your taste</div>
+    ${ranked.map(({r,score})=>{const pct=Math.round(score/max*100);
+      return `<div class="li">${brand(r,"av-brand")}
+        <div class="info"><b>${r.name}</b><small>${r.area.split(",").pop().trim()} · ~${r.avg} OMR · 🔥 ${r.bestseller}</small>
+        <div class="bar"><i data-w="${pct}"></i></div></div><div class="score">${pct}%</div></div>`;}).join("")}
+    <button class="btn ghost" onclick="clearMatches()">Clear matches</button>`;
+  requestAnimationFrame(()=>$$(".bar i",wrap).forEach(b=>b.style.width=b.dataset.w+"%"));
+}
+function clearMatches(){state.liked=[];save();renderDeck();renderMatches($("#sheetBody"));renderMatches($("#sideBody"));}
+
+/* sheet */
+function openSheet(){renderMatches($("#sheetBody"));$("#sheet").classList.add("open");}
+function closeSheet(){$("#sheet").classList.remove("open");}
+
+/* sparkle burst */
+function sparkle(){
+  const colors=["#ff5a7e","#ffb648","#38d39f","#fff"];
+  for(let i=0;i<18;i++){
+    const s=document.createElement("div");s.className="spark";
+    s.style.background=colors[i%4];
+    s.style.left="50%";s.style.top="46%";
+    document.body.appendChild(s);
+    const ang=(i/18)*Math.PI*2,dist=80+Math.random()*120;
+    s.animate([{transform:"translate(-50%,-50%) scale(1)",opacity:1},
+      {transform:`translate(${Math.cos(ang)*dist-50}%,${Math.sin(ang)*dist-50}%) scale(0)`,opacity:0}],
+      {duration:700+Math.random()*300,easing:"cubic-bezier(.2,.6,.3,1)"}).onfinish=()=>s.remove();
+  }
+}
+
+/* toast */
+let tT;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tT);tT=setTimeout(()=>t.classList.remove("show"),1500);}
+
+/* ripple */
+function ripple(e){const b=e.currentTarget,c=document.createElement("span");c.className="ripple";
+  const d=Math.max(b.clientWidth,b.clientHeight);c.style.width=c.style.height=d+"px";
+  const r=b.getBoundingClientRect();c.style.left=(e.clientX-r.left-d/2)+"px";c.style.top=(e.clientY-r.top-d/2)+"px";
+  b.appendChild(c);setTimeout(()=>c.remove(),500);}
+
+/* persistence */
+function save(){try{localStorage.setItem("omanEats",JSON.stringify({liked:state.liked.map(r=>r.id),passed:state.passed.map(r=>r.id)}));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem("omanEats")||"{}");
+  if(d.liked)state.liked=d.liked.map(id=>ORDS.restaurants.find(r=>r.id===id)).filter(Boolean);
+  if(d.passed)state.passed=d.passed.map(id=>ORDS.restaurants.find(r=>r.id===id)).filter(Boolean);}catch(e){}}
+
+/* keyboard */
+window.addEventListener("keydown",e=>{
+  if($("#sheet").classList.contains("open")&&e.key==="Escape")return closeSheet();
+  if(!state.queue.length)return;
+  if(e.key==="ArrowRight")decide("like");
+  if(e.key==="ArrowLeft")decide("pass");
+  if(e.key==="ArrowDown"||e.key.toLowerCase()==="z")undo();
+});
+
+function init(){
+  load();buildFilters();resetQueue();
+  $("#btnLike").addEventListener("click",e=>{ripple(e);state.queue.length&&decide("like");});
+  $("#btnNope").addEventListener("click",e=>{ripple(e);state.queue.length&&decide("pass");});
+  $("#btnUndo").addEventListener("click",e=>{ripple(e);undo();});
+  $("#btnInfo").addEventListener("click",e=>{ripple(e);const r=state.queue[0];if(r)toast(`${r.signature} — ${PRICE_LABEL[r.price]}`);});
+  const showBest=()=>{if(state.liked.length)sparkle();if(window.innerWidth<920)openSheet();else $(".side").scrollTo({top:0,behavior:"smooth"});};
+  $("#btnStar").addEventListener("click",e=>{ripple(e);showBest();});
+  $("#btnMatches").addEventListener("click",openSheet);
+  $("#sheet").addEventListener("click",e=>{if(e.target===$("#sheet"))closeSheet();});
+  window.addEventListener("resize",renderDeck);
+}
+window.openSheet=openSheet;window.closeSheet=closeSheet;window.reshuffle=reshuffle;window.clearMatches=clearMatches;
+document.addEventListener("DOMContentLoaded",init);
+</script>
+</body>
+</html>
